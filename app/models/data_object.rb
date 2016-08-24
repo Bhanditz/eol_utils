@@ -1,5 +1,6 @@
 class DataObject < ActiveRecord::Base
   has_one :image_size
+  include Magick
 
   class << self
     def object_cache_re
@@ -14,6 +15,17 @@ class DataObject < ActiveRecord::Base
       where("id >= 21621253 AND identifier LIKE 'http://www.inaturalist%' AND "\
         "object_cache_url >= 201607300000000 AND object_cache_url <= 201608010000000")
     end
+
+    def restore_inat
+      ids = []
+      bad_inat_images.find_each do |image|
+        image.restore
+        ids << image.id
+        if ids.size >= 250
+          logger.warn "Restored: #{ids.join}"
+        end
+      end
+    end
   end
 
   def dir
@@ -26,7 +38,6 @@ class DataObject < ActiveRecord::Base
   end
 
   def restore
-    include Magick
     unless Dir.exist?(dir)
       FileUtils.mkdir_p(dir)
       FileUtils.chmod(0755, dir)
