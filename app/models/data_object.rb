@@ -55,9 +55,11 @@ class DataObject < ActiveRecord::Base
     end
     orig_filename = dir + file_basename + "_orig.jpg"
     begin
-      image = Image.read(object_url).first # No animations supported!
+      get_url = object_url.sub(/^https/, "http")
+      image = Image.read(get_url).first # No animations supported!
     rescue Magick::ImageMagickError => e
-      logger.error("Couldn't get image #{object_url} for #{url}")
+      logger.error("Couldn't get image #{get_url} for #{url}")
+      return nil
     end
     image.format = 'JPEG'
     if File.exist?(orig_filename)
