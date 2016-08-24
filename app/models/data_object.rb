@@ -18,14 +18,22 @@ class DataObject < ActiveRecord::Base
 
     def restore_inat
       ids = []
+      started = false
+      count = 0
       bad_inat_images.find_each do |image|
+        unless started
+          logger.warn "Started #restore_inat"
+          started = true
+        end
         image.restore
         ids << image.id
-        if ids.size >= 250
-          logger.warn "Restored: #{ids.join}"
+        count += 1
+        if ids.size >= 50
+          logger.warn "Restored: #{ids.join(",")}"
           ids = []
         end
       end
+      logger.warn "FINISHED. Total: #{count} data objects restored."
     end
   end
 
@@ -46,7 +54,9 @@ class DataObject < ActiveRecord::Base
     orig_filename = dir + file_basename + "_orig.jpg"
     image = Image.read(object_url).first # No animations supported!
     image.format = 'JPEG'
-    unless File.exist?(orig_filename)
+    if File.exist?(orig_filename)
+      logger.warn "Hmmmn. There was already a #{orig_filename} for #{id}. Skipping."
+    else
       image.write(orig_filename)
       FileUtils.chmod(0644, orig_filename)
     end
