@@ -19,7 +19,7 @@ class DataObject < ActiveRecord::Base
 
     def restore_inat
       count = 0
-      last_id = 33930103 # I looked. This was the last ID before missing-iNat.
+      last_id = 33930110 # I looked. This was the last ID before missing-iNat.
       images = bad_inat_images.where(["id > ?", last_id]).order(:id).limit(50)
       logger.warn "Started #restore_inat"
       while images.exists?
