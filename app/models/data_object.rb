@@ -12,26 +12,24 @@ class DataObject < ActiveRecord::Base
     end
 
     def bad_inat_images
-      where("id >= 21621253 AND identifier LIKE 'http://www.inaturalist%' AND "\
-        "object_cache_url >= 201607300000000 AND object_cache_url <= 201608010000000")
+      where("identifier LIKE 'http://www.inaturalist%' AND "\
+        "object_cache_url >= 201607300000000 AND "\
+        "object_cache_url <= 201608010000000")
     end
 
     def restore_inat
-      ids = []
-      started = false
       count = 0
-      bad_inat_images.find_each do |image|
-        unless started
-          logger.warn "Started #restore_inat"
-          started = true
+      last_id = 21621252
+      images = bad_inat_images.where(["id > ?", last_id]).order(:id).limit(50)
+      logger.warn "Started #restore_inat"
+      while images.size > 0
+        images.each do |image|
+          image.restore
+          count += 1
+          last_id = image.id
         end
-        image.restore
-        ids << image.id
-        count += 1
-        if ids.size >= 50
-          logger.warn "Restored: #{ids.join(",")}"
-          ids = []
-        end
+        logger.warn "Restored: #{images.map(&:id).join(",")}"
+        images = bad_inat_images.where(["id > ?", last_id]).limit(50)
       end
       logger.warn "FINISHED. Total: #{count} data objects restored."
     end
