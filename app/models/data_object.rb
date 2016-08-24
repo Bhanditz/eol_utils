@@ -23,6 +23,7 @@ class DataObject < ActiveRecord::Base
         ids << image.id
         if ids.size >= 250
           logger.warn "Restored: #{ids.join}"
+          ids = []
         end
       end
     end
@@ -60,6 +61,8 @@ class DataObject < ActiveRecord::Base
         end
         this_image.strip! # Cleans up properties
         this_image.write(filename) { self.quality = 80 }
+        # Note: we *should* honor crops. But none of these will have been
+        # cropped, so I am skipping it for now.
         FileUtils.chmod(0644, filename)
       end
     end
