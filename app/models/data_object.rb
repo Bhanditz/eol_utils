@@ -19,7 +19,7 @@ class DataObject < ActiveRecord::Base
 
     def restore_inat
       count = 0
-      last_id = 21621252 # I looked. This was the last ID before missing-iNat.
+      last_id = 33930103 # I looked. This was the last ID before missing-iNat.
       images = bad_inat_images.where(["id > ?", last_id]).order(:id).limit(50)
       logger.warn "Started #restore_inat"
       while images.exists?
@@ -44,13 +44,21 @@ class DataObject < ActiveRecord::Base
     object_cache_url.to_s.sub(DataObject.object_cache_re, "\\5")
   end
 
+  def url
+    "http://eol.org/data_objects/#{id}"
+  end
+
   def restore
     unless Dir.exist?(dir)
       FileUtils.mkdir_p(dir)
       FileUtils.chmod(0755, dir)
     end
     orig_filename = dir + file_basename + "_orig.jpg"
-    image = Image.read(object_url).first # No animations supported!
+    begin
+      image = Image.read(object_url).first # No animations supported!
+    rescue Magick::ImageMagickError => e
+      logger.error("Couldn't get image #{object_url} for #{url}")
+    end
     image.format = 'JPEG'
     if File.exist?(orig_filename)
       logger.warn "Hmmmn. There was already a #{orig_filename} for #{id}. Skipping."
