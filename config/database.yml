@@ -49,6 +49,9 @@ test:
 #
 production:
   <<: *default
-  database: eol_utils_production
-  username: eol_utils
   password: <%= ENV['EOL_UTILS_DATABASE_PASSWORD'] %>
+  host: <%= ENV['EOL_DATABASE_HOST'] %>
+  port: <%= ENV['EOL_DATABASE_PORT'] %>
+  database: <%= ENV['EOL_DATABASE_NAME'] %>
+  username: <%= ENV['EOL_DATABASE_USER'] %>
+  password: <%= ENV['EOL_DATABASE_PASSWORD'] %>
