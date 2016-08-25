@@ -19,7 +19,7 @@ class DataObject < ActiveRecord::Base
 
     def restore_inat
       count = 0
-      last_id = 33930560 # I looked. This was the last ID before missing-iNat.
+      last_id = 33977211 # The script has run this far already.
       images = bad_inat_images.where(["id > ?", last_id]).order(:id).limit(50)
       logger.warn "Started #restore_inat"
       while images.exists?
@@ -29,6 +29,8 @@ class DataObject < ActiveRecord::Base
           last_id = image.id
         end
         logger.warn "Restored: #{images.map(&:id).join(",")}"
+        GC.start
+        sleep(1)
         images = bad_inat_images.where(["id > ?", last_id]).limit(50)
       end
       logger.warn "FINISHED. Total: #{count} data objects restored."
@@ -79,10 +81,12 @@ class DataObject < ActiveRecord::Base
         end
         this_image.strip! # Cleans up properties
         this_image.write(filename) { self.quality = 80 }
+        this_image.destroy! # Reclaim memory.
         # Note: we *should* honor crops. But none of these will have been
         # cropped, so I am skipping it for now.
         FileUtils.chmod(0644, filename)
       end
     end
+    image.destroy! # Clear memory
   end
 end
